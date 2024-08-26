@@ -1,7 +1,10 @@
 import React, { useState } from "react";
+import axios from "axios";
 import Quote from "../components/Quote";
 import { Link } from "react-router-dom";
 import Input from "../components/Input";
+import { BACKEND_URL } from "../../config";
+import { useNavigate } from "react-router-dom";
 
 interface SignupInputTypes {
   username: string;
@@ -14,6 +17,25 @@ function SignUp() {
     email: "",
     password: "",
   });
+  const [errorMessage, setErrorMessage] = useState("");
+  const navigate = useNavigate();
+
+  const sendRequest = async () => {
+    try {
+      const response = await axios.post(`${BACKEND_URL}/signup`, userDetails);
+      navigate("/blogs");
+      console.log(response.data);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.log(error.response?.data || error.message);
+        setErrorMessage(error.response?.data.message);
+      } else {
+        console.log("Unexpected error:", error);
+        setErrorMessage("An Unexpected Error occured.");
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
       <div className="flex w-1/2 items-center justify-center bg-white">
@@ -60,9 +82,13 @@ function SignUp() {
               }));
             }}
           />
-          <button className="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">
+          <button
+            onClick={sendRequest}
+            className="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
+          >
             Signup
           </button>
+          <p>{errorMessage}</p>
         </div>
       </div>
       <div className="flex w-1/2 items-center justify-center bg-slate-200">
