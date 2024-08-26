@@ -1,0 +1,91 @@
+node_modules
+# Keep environment variables out of version control
+.env
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+logs
+*.log
+*.log.*
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Next.js
+.next/
+out/
+
+# Build output
+dist/
+build/
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Debug files
+*.lock
+*.swp
+*.swo
+
+# Editor files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# MongoDB
+/data/db/
+mongod.lock
+
+# Coverage files
+coverage/
+.nyc_output/
+
+# ESLint cache
+.eslintcache
+
+# Miscellaneous
+*.tgz
+*.zip
+*.tar
+*.gz
+
+# React Native
+.expo/
+.expo-shared/
+
+# Public files for deployment
+/public/static
+/public/build
+
+# Ignore compiled TypeScript files
+*.tsbuildinfo
+
+# Optional debugging files
+debug.log*
+error.log*
