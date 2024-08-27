@@ -23,8 +23,10 @@ function SignUp() {
   const sendRequest = async () => {
     try {
       const response = await axios.post(`${BACKEND_URL}/signup`, userDetails);
+      const token = response.data;
+      localStorage.setItem("token", token);
+      console.log(token);
       navigate("/blogs");
-      console.log(response.data);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.log(error.response?.data || error.message);

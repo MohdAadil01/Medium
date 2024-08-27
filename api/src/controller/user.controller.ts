@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -48,9 +49,12 @@ export const signup = async (
         password: hashedPassword,
       },
     });
-    const { password: _, ...userWithoutPassword } = newUser;
+    const token = jwt.sign(
+      { user: newUser.username },
+      process.env.JWT_SECRET as string
+    );
     res.status(200).json({
-      user: userWithoutPassword,
+      token,
       message: "Signed up.",
     });
   } catch (error: any) {
@@ -62,10 +66,52 @@ export const signup = async (
   }
 };
 
-const signinSchema = z.object({
+const signInSchema = z.object({
   email: z.string().email(),
+  password: z.string(),
 });
 
-export const signin = async (req: Request, res: Response) => {
-  res.send("signin");
+export const signin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email, password } = req.body;
+    const validation = signInSchema.safeParse({ email, password });
+    if (!validation.success) {
+      return next({ status: 401, message: "Invalid Inputs" });
+    }
+    const user = await prisma.user.findFirst({
+      where: {
+        email,
+      },
+    });
+    if (!user) {
+      return next({
+        status: 404,
+        message: "Don't have an account. Create One",
+      });
+    }
+    const isSamePassword = await bcrypt.compare(password, user.password);
+    if (!isSamePassword) {
+      return next({
+        status: 404,
+        message: "Invalid creadentials.",
+      });
+    }
+    const token = jwt.sign(
+      { user: user.email },
+      process.env.JWT_SECRET as string
+    );
+    res.status(200).json({
+      token,
+      message: "Logged In.",
+    });
+  } catch (error: any) {
+    return next({
+      status: 401,
+      message: error.message,
+    });
+  }
 };

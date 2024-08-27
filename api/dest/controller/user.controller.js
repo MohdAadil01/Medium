@@ -8,17 +8,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -26,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.signin = exports.signup = void 0;
 const zod_1 = require("zod");
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const signupSchema = zod_1.z.object({
@@ -65,9 +55,9 @@ const signup = (req, res, next) => __awaiter(void 0, void 0, void 0, function* (
                 password: hashedPassword,
             },
         });
-        const { password: _ } = newUser, userWithoutPassword = __rest(newUser, ["password"]);
+        const token = jsonwebtoken_1.default.sign({ user: newUser.username }, process.env.JWT_SECRET);
         res.status(200).json({
-            user: userWithoutPassword,
+            token,
             message: "Signed up.",
         });
     }
@@ -80,10 +70,46 @@ const signup = (req, res, next) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.signup = signup;
-const signinSchema = zod_1.z.object({
+const signInSchema = zod_1.z.object({
     email: zod_1.z.string().email(),
+    password: zod_1.z.string(),
 });
-const signin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.send("signin");
+const signin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email, password } = req.body;
+        const validation = signInSchema.safeParse({ email, password });
+        if (!validation.success) {
+            return next({ status: 401, message: "Invalid Inputs" });
+        }
+        const user = yield prisma.user.findFirst({
+            where: {
+                email,
+            },
+        });
+        if (!user) {
+            return next({
+                status: 404,
+                message: "Don't have an account. Create One",
+            });
+        }
+        const isSamePassword = yield bcrypt_1.default.compare(password, user.password);
+        if (!isSamePassword) {
+            return next({
+                status: 404,
+                message: "Invalid creadentials.",
+            });
+        }
+        const token = jsonwebtoken_1.default.sign({ user: user.email }, process.env.JWT_SECRET);
+        res.status(200).json({
+            token,
+            message: "Logged In.",
+        });
+    }
+    catch (error) {
+        return next({
+            status: 401,
+            message: error.message,
+        });
+    }
 });
 exports.signin = signin;
